@@ -34,6 +34,8 @@ Quantum computing is hard to visualize, especially when learning how quantum gat
 ## 📜 License
 
 This project is open-source under the MIT License.
+This project is a member of IBM Qiskit Ecosystem.
+Find it here on the official page: https://qiskit.org/ecosystem
 
 
 
