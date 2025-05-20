@@ -2,7 +2,8 @@ import qiskit
 from qiskit import QuantumCircuit
 from qiskit.visualization import visualize_transition
 import tkinter
-from tkinter import LEFT, END
+import numpy as np
+from tkinter import LEFT, END, messagebox
 
 # Define window
 root = tkinter.Tk()
@@ -40,7 +41,10 @@ def initialize_circuit():
     CIRCUIT = QuantumCircuit(1)
 
 initialize_circuit()
-theta = 0
+THETA = 0
+def clear_command():
+    CIRCUIT.data.clear()
+    display.delete(0, END)
 
 def help_command():
     info = tkinter.Tk()
@@ -106,13 +110,57 @@ def display_gate(input):
     input_gates = display.get()
     num_pressed = len(input_gates)
     list_gates = list(input_gates)
-    search_words = ["R", "D"]
+    search_words = ["R", "D", "S", "T"]
     count_double_valued_gates = [list_gates.count(i) for i in search_words]
     num_pressed -= sum(count_double_valued_gates)
     if num_pressed == 10:
         gates = [x_gate, y_gate, z_gate, Rx_gate, Ry_gate, Rz_gate, s_gate, sd_gate, t_gate, td_gate, h_gate]
         for gate in gates:
             gate.config(state='disabled')
+
+
+def change_theta(num, key):
+    THETA = num * np.pi
+    if key == 'x':
+        CIRCUIT.rx(THETA, 0)
+        display_gate('Rx')
+    elif key == 'y':
+        CIRCUIT.ry(THETA, 0)
+        display_gate('Ry')
+    elif key == 'z':
+        CIRCUIT.rz(THETA, 0)
+        display_gate('Rz')
+    THETA = 0
+
+def get_user_input(key):
+    get_input = tkinter.Tk()
+    get_input.title('Theta')
+    get_input.geometry('300x300')
+    get_input.resizable(0, 0)
+
+    display_input = tkinter.LabelFrame(get_input)
+    display_input.pack(pady=20)
+
+    theta_screen = tkinter.Entry(display_input, width=20, font=display_font, bg=background, borderwidth=2, justify='left')
+    theta_screen.pack(padx=3, pady=4)
+
+    def on_submit():
+        try:
+            theta_value = float(theta_screen.get())
+            change_theta(theta_value, key)
+            get_input.destroy()
+        except ValueError:
+            print("Please enter a valid real number.")
+            messagebox.showerror('Float Error', 'Error: Please enter a valid value for Theta.')
+            get_input.destroy()
+
+    submit_button = tkinter.Button(get_input, text="Submit", command=on_submit)
+    submit_button.pack()
+
+    get_input.mainloop()
+
+def visualize_qubit():
+    visualize_transition(CIRCUIT, trace=True)
 
 # X, Y, Z gates
 x_gate = tkinter.Button(button_frame, font=button_font, bg=buttons, text='X',command=lambda:[display_gate('X'),CIRCUIT.x(0)])
@@ -123,9 +171,9 @@ y_gate.grid(row=0, column=1,ipadx=48,ipady=1)
 z_gate.grid(row=0, column=2,ipadx=60,ipady=1)
 
 # R gates
-Rx_gate = tkinter.Button(button_frame, font=button_font, bg=buttons, text='Rx',command=lambda:[display_gate('Rx'),CIRCUIT.x(0)])
-Ry_gate = tkinter.Button(button_frame, font=button_font, bg=buttons, text='Ry',command=lambda:[display_gate('Ry'),CIRCUIT.x(0)])
-Rz_gate = tkinter.Button(button_frame, font=button_font, bg=buttons, text='Rz',command=lambda:[display_gate('Rz'),CIRCUIT.x(0)])
+Rx_gate = tkinter.Button(button_frame, font=button_font, bg=buttons, text='Rx',command=lambda:[get_user_input("x")])
+Ry_gate = tkinter.Button(button_frame, font=button_font, bg=buttons, text='Ry',command=lambda:[get_user_input("y")])
+Rz_gate = tkinter.Button(button_frame, font=button_font, bg=buttons, text='Rz',command=lambda:[get_user_input("z")])
 Rx_gate.grid(row=1, column=0,columnspan=1,ipady=1,sticky='WE')
 Ry_gate.grid(row=1, column=1,columnspan=1,ipady=1,sticky='WE')
 Rz_gate.grid(row=1, column=2,columnspan=1,ipady=1,sticky='WE')
@@ -146,13 +194,13 @@ td_gate.grid(row=3, column=1,sticky='WE')
 
 # Quit and visualizer buttons
 quit = tkinter.Button(button_frame, font=button_font, bg=special_buttons, text='QUIT',command=root.destroy)
-visualize = tkinter.Button(button_frame, font=button_font, bg=special_buttons, text='VISUALIZE')
+visualize = tkinter.Button(button_frame, font=button_font, bg=special_buttons, text='VISUALIZE',command=visualize_qubit)
 quit.grid(row=4, column=0,sticky='WE',columnspan=2,ipadx=5)
 visualize.grid(row=4, column=2,pady=1,sticky='WE',ipadx=8,columnspan=1)
 
 # Help and Clear
 help = tkinter.Button(button_frame, font=button_font, bg=special_buttons, text='HELP', command=help_command)
-clear = tkinter.Button(button_frame, font=button_font, bg=special_buttons, text='CLEAR')
+clear = tkinter.Button(button_frame, font=button_font, bg=special_buttons, text='CLEAR', command=clear_command)
 help.grid(row=5, column=0,sticky='WE',columnspan=3,ipadx=5)
 clear.grid(row=6, column=0,pady=1,sticky='WE',ipadx=8,columnspan=3)
 
