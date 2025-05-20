@@ -19,6 +19,7 @@ This project simulates the evolution of a **single qubit** using the **Bloch Sph
 ## 🚀 Future Features
 
 - Step-through simulation of multiple gates
+- Multiple qubit entaglement simulations
 - Live animation of state transitions
 - Save and export gate sequences
 - Expand to include noise models or measurement simulation
