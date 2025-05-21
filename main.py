@@ -1,4 +1,3 @@
-import qiskit
 from qiskit import QuantumCircuit
 from qiskit.visualization import visualize_transition
 import tkinter
@@ -120,6 +119,9 @@ def display_gate(input):
 
 
 def change_theta(num, key):
+    if num > 2 or num < -2 :
+        messagebox.showerror('Float Error', 'Error: Please enter a number [-2, 2].')
+        return
     THETA = num * np.pi
     if key == 'x':
         CIRCUIT.rx(THETA, 0)
@@ -160,7 +162,7 @@ def get_user_input(key):
     get_input.mainloop()
 
 def visualize_qubit():
-    visualize_transition(CIRCUIT, trace=True)
+    visualize_transition(CIRCUIT, trace=True,)
 
 # X, Y, Z gates
 x_gate = tkinter.Button(button_frame, font=button_font, bg=buttons, text='X',command=lambda:[display_gate('X'),CIRCUIT.x(0)])
