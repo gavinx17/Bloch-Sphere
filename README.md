@@ -9,6 +9,7 @@ This project simulates the evolution of a **single qubit** using the **Bloch Sph
 - Input **various single-qubit gates** (e.g., X, Y, Z, H, S, T, Rx, Ry, Rz)
 - Observe how these gates **transform the qubit state**
 - **Visualize** the resulting qubit state on the Bloch Sphere in real-time or step-by-step
+- **Add** two integer values and visualize the "ripple-carry" circuit to perform in-place addition.
 
 ## 🎯 Goals
 
