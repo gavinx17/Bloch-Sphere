@@ -1,8 +1,13 @@
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
+from qiskit.circuit.library import FullAdderGate
 from qiskit.visualization import visualize_transition
 import tkinter
 import numpy as np
 from tkinter import LEFT, END, messagebox
+import math
+
+# Globals
+THETA = 0
 
 # Define window
 root = tkinter.Tk()
@@ -39,13 +44,19 @@ def initialize_circuit():
     global CIRCUIT
     CIRCUIT = QuantumCircuit(1)
 
-initialize_circuit()
-THETA = 0
 def clear_command():
+    """
+    Action for clear button, clears the queue for CIRCUIT
+    and deletes the characters in input box.
+    """
     CIRCUIT.data.clear()
     display.delete(0, END)
 
 def help_command():
+    """
+    Action for help button, displays output box
+    for help text to the user.
+    """
     info = tkinter.Tk()
     info.title('Help')
     info.geometry('730x470')
@@ -105,6 +116,10 @@ def help_command():
     info.mainloop()
 
 def display_gate(input):
+    """
+    Error checking for gates that have more than one letter
+    as their symbol to ensure no more than 10 gates are applied.
+    """
     display.insert(END, input)
     input_gates = display.get()
     num_pressed = len(input_gates)
@@ -119,6 +134,10 @@ def display_gate(input):
 
 
 def change_theta(num, key):
+    """
+    Helper function for the R gates to get and transform
+    the theta.
+    """
     if num > 2 or num < -2 :
         messagebox.showerror('Float Error', 'Error: Please enter a number [-2, 2].')
         return
@@ -134,7 +153,46 @@ def change_theta(num, key):
         display_gate('Rz')
     THETA = 0
 
+def adder_func(num1, num2):
+    power = math.ceil(math.log2(max(num1, num2)))
+    adder = FullAdderGate(power)
+
+    reg_a = QuantumRegister(power, "A")
+    number_a = QuantumCircuit(reg_a)
+    number_a.initialize(num1, reg_a)
+
+    reg_b = QuantumRegister(power, "B")
+    number_b = QuantumCircuit(reg_b)
+    number_b.initialize(num2, reg_b)
+
+    # Main circuit with consistent sizes
+    qregs = [
+        QuantumRegister(1, "cin"),       # 1 qubit
+        reg_a,                           # power qubits
+        reg_b,                           # power qubits
+        QuantumRegister(1, "cout")       # 1 qubit
+    ]
+
+    reg_result = ClassicalRegister(power)
+    circuit_adder = QuantumCircuit(*qregs, reg_result)
+
+    # Compose all pieces
+    circuit_adder = (
+        circuit_adder.compose(number_a, qubits=reg_a)
+                    .compose(number_b, qubits=reg_b)
+                    .compose(adder)
+    )
+
+    circuit_adder.measure(reg_b, reg_result)
+
+    fig = circuit_adder.draw(output="mpl")
+    fig.show()
+    
 def get_user_input(key):
+    """
+    Gets the user input for the R gates
+    can be any real number [-2, 2] inclusive.
+    """
     get_input = tkinter.Tk()
     get_input.title('Theta')
     get_input.geometry('300x300')
@@ -147,6 +205,11 @@ def get_user_input(key):
     theta_screen.pack(padx=3, pady=4)
 
     def on_submit():
+        """
+        Need to ensure that the input is
+        a real number and not letters or
+        other symbols.
+        """
         try:
             theta_value = float(theta_screen.get())
             change_theta(theta_value, key)
@@ -161,8 +224,56 @@ def get_user_input(key):
 
     get_input.mainloop()
 
+def get_user_nums():
+    """
+    Gets the user input for the R gates
+    can be any real number [-2, 2] inclusive.
+    """
+    get_nums = tkinter.Tk()
+    get_nums.title('Theta')
+    get_nums.geometry('300x300')
+    get_nums.resizable(0, 0)
+
+    display_input = tkinter.LabelFrame(get_nums)
+    display_input.pack(pady=20)
+
+    num1_screen = tkinter.Entry(display_input, width=20, font=display_font, bg=background, borderwidth=2, justify='left')
+    num1_screen.pack(padx=3, pady=4)
+
+    num2_screen = tkinter.Entry(display_input, width=20, font=display_font, bg=background, borderwidth=2, justify='left')
+    num2_screen.pack(padx=3, pady=4)
+
+    def on_submit():
+        """
+        Need to ensure that the input is
+        a real number and not letters or
+        other symbols.
+        """
+        try:
+            num1 = int(num1_screen.get())
+            num2 = int(num2_screen.get())
+            get_nums.destroy()
+            adder_func(num1,num2)
+        except ValueError:
+            print("Please enter a valid real number.")
+            messagebox.showerror('Float Error', 'Error: Please enter a valid value for Theta.')
+            get_nums.destroy()
+
+    submit_button = tkinter.Button(get_nums, text="Submit", command=on_submit)
+    submit_button.pack()
+
+    get_nums.mainloop()
+
 def visualize_qubit():
+    """
+    The function doing the visualizing,
+    given the circuit with the queue of gates applied
+    prior to calling.
+    """
     visualize_transition(CIRCUIT, trace=True,)
+
+# Initialize the circuit
+initialize_circuit()
 
 # X, Y, Z gates
 x_gate = tkinter.Button(button_frame, font=button_font, bg=buttons, text='X',command=lambda:[display_gate('X'),CIRCUIT.x(0)])
@@ -184,9 +295,11 @@ Rz_gate.grid(row=1, column=2,columnspan=1,ipady=1,sticky='WE')
 s_gate = tkinter.Button(button_frame, font=button_font, bg=buttons, text='S',command=lambda:[display_gate('S'),CIRCUIT.s(0)])
 sd_gate = tkinter.Button(button_frame, font=button_font, bg=buttons, text='SD',command=lambda:[display_gate('Sd'),CIRCUIT.sdg(0)])
 h_gate = tkinter.Button(button_frame, font=button_font, bg=buttons, text='H',command=lambda:[display_gate('H'),CIRCUIT.h(0)])
-s_gate.grid(row=2, column=0,columnspan=1,ipady=1,sticky='WE')
-sd_gate.grid(row=2, column=1,columnspan=1,ipady=1,sticky='WE')
-h_gate.grid(row=2, column=2,rowspan=2,ipady=1,sticky='WENS')
+adder = tkinter.Button(button_frame, font=button_font, bg=buttons, text='Add',command=get_user_nums)
+adder.grid(row=2, column=0,columnspan=1,ipady=1,sticky='WE')
+s_gate.grid(row=2, column=1,columnspan=1,ipady=1,sticky='WE')
+sd_gate.grid(row=2, column=2,columnspan=1,ipady=1,sticky='WE')
+h_gate.grid(row=3, column=2,columnspan=1,ipady=1,sticky='WENS')
 
 # T and TD gates
 t_gate = tkinter.Button(button_frame, font=button_font, bg=buttons, text='T',command=lambda:[display_gate('T'),CIRCUIT.t(0)])
@@ -197,13 +310,13 @@ td_gate.grid(row=3, column=1,sticky='WE')
 # Quit and visualizer buttons
 quit = tkinter.Button(button_frame, font=button_font, bg=special_buttons, text='QUIT',command=root.destroy)
 visualize = tkinter.Button(button_frame, font=button_font, bg=special_buttons, text='VISUALIZE',command=visualize_qubit)
-quit.grid(row=4, column=0,sticky='WE',columnspan=2,ipadx=5)
-visualize.grid(row=4, column=2,pady=1,sticky='WE',ipadx=8,columnspan=1)
+quit.grid(row=4, column=2,sticky='WE',columnspan=1,ipadx=5)
+visualize.grid(row=5,sticky='WE',ipadx=8,columnspan=3)
 
 # Help and Clear
 help = tkinter.Button(button_frame, font=button_font, bg=special_buttons, text='HELP', command=help_command)
 clear = tkinter.Button(button_frame, font=button_font, bg=special_buttons, text='CLEAR', command=clear_command)
-help.grid(row=5, column=0,sticky='WE',columnspan=3,ipadx=5)
+help.grid(row=4, column=0,sticky='WE',columnspan=2,ipadx=5)
 clear.grid(row=6, column=0,pady=1,sticky='WE',ipadx=8,columnspan=3)
 
 # Main loop
