@@ -230,7 +230,8 @@ def get_user_nums():
     can be any real number [-2, 2] inclusive.
     """
     get_nums = tkinter.Tk()
-    get_nums.title('Theta')
+    get_nums.title('Enter Numbers')
+    get_nums.iconbitmap(default='logo.ico')
     get_nums.geometry('300x300')
     get_nums.resizable(0, 0)
 
